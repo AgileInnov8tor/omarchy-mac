@@ -76,31 +76,9 @@ ensure_aur_helper() {
   rm -rf "$workspace"
 }
 
-ensure_package_sources() {
-  # A fresh machine has no omarchy-pkgs checkout, and build-packages.sh needs
-  # the PKGBUILDs. Respect an existing one so a developer can build offline.
-  if [[ -n ${OMARCHY_PKGS_PATH:-} && -d ${OMARCHY_PKGS_PATH:-} ]]; then
-    return 0
-  fi
-
-  local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy-build"
-  local pkgs_checkout="$cache_dir/omarchy-pkgs"
-
-  if [[ -d $pkgs_checkout/.git ]]; then
-    log "Updating the PKGBUILD checkout"
-    git -C "$pkgs_checkout" pull --ff-only || warn "Could not update $pkgs_checkout; using it as is."
-  else
-    log "Cloning the PKGBUILD checkout"
-    mkdir -p "$cache_dir"
-    git clone --depth 1 https://github.com/omacom/omarchy-pkgs.git "$pkgs_checkout"
-  fi
-
-  export OMARCHY_PKGS_PATH="$pkgs_checkout"
-}
-
 build_omarchy_packages() {
   log "Building the Omarchy packages from this checkout"
-  OMARCHY_PACKAGE_OUTPUT="$package_output" "$checkout/build-packages.sh"
+  OMARCHY_BUILD_DEPS=install OMARCHY_PACKAGE_OUTPUT="$package_output" "$checkout/build-packages.sh"
 }
 
 install_omarchy_packages() {
@@ -300,7 +278,6 @@ main() {
   ensure_arm_package_repo
   ensure_gum
   ensure_aur_helper
-  ensure_package_sources
   build_omarchy_packages
   install_omarchy_packages
   install_default_package_set

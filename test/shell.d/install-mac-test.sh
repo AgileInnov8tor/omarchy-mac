@@ -35,13 +35,13 @@ grep -F 'omarchy-reinstall-configs' "$install_script" >/dev/null ||
   fail "the installer seeds shipped defaults into an already-created home"
 pass "the installer seeds shipped defaults into an already-created home"
 
-# Macs boot through GRUB. Depending on limine would also make
-# install/login/alt-bootloaders.sh skip the plymouth setup it guards.
-for limine_package in limine limine-mkinitcpio-hook limine-snapper-sync; do
-  grep -qF "  $limine_package" "$build_script" ||
-    fail "the package build drops $limine_package from the Apple Silicon dependencies"
-done
-pass "the package build drops the limine stack from the Apple Silicon dependencies"
+# Package metadata and actual payloads are checked by test/package-profile.
+# The normal builder must use those reviewed recipes, never the live branch.
+grep -F 'omarchy_package_recipe_export' "$build_script" >/dev/null ||
+  fail "the package build exports the pinned recipes and Mac profile"
+! grep -q 'strip_limine_dependencies' "$build_script" ||
+  fail "the build no longer guesses at dependency arrays with sed"
+pass "the package build uses the pinned architecture-aware recipes"
 
 # The hotfix rebuild number has to land on omarchy and omarchy-settings, not
 # the keyring or the font. Run in a subshell: sourcing the builder replaces
