@@ -42,6 +42,15 @@ printf '$cmd:%s\n' "\$*" >>"\$OMARCHY_TEST_LOG"
 SH
 done
 
+# The installer refuses to run anywhere but aarch64, so the architecture has to
+# be stubbed here or this test only passes when it happens to run on an Apple
+# Silicon machine and silently skips the whole installer everywhere else.
+cat >"$mock_bin/uname" <<'SH'
+#!/bin/bash
+[[ ${1:-} == "-m" ]] && { echo aarch64; exit 0; }
+exec /usr/bin/uname "$@"
+SH
+
 chmod +x "$mock_bin"/*
 
 run_installer() {
