@@ -73,6 +73,12 @@ for absent in etc/limine-entry-tool.d etc/systemd/zram-generator.conf etc/skel/.
   [[ ! -e $settings/$absent ]] || fail "ARM package does not own $absent"
 done
 [[ $(find "$settings/etc/mkinitcpio.conf.d" -type f | wc -l) == 2 ]] || fail "only the reviewed boot hooks ship"
+arm_backup_paths=$(CARCH=aarch64 OMARCHY_SRC="$ROOT" bash -euo pipefail -c 'source "$1"; printf "%s\n" "${backup[@]}"' _ \
+  "$work/recipes/pkgbuilds/omarchy-settings/PKGBUILD")
+while IFS= read -r backed_up; do
+  [[ -f $settings/$backed_up ]] || fail "every ARM backup entry has a staged file: $backed_up"
+done <<<"$arm_backup_paths"
+pass "every ARM backup declaration names a file in the actual settings payload"
 for backed_up in etc/mkinitcpio.conf.d/omarchy_hooks.conf etc/mkinitcpio.conf.d/thunderbolt_module.conf etc/systemd/oomd.conf.d/10-omarchy.conf; do
   # CARCH in makepkg metadata follows this host; explicitly evaluate backup on ARM too.
   CARCH=aarch64 OMARCHY_SRC="$ROOT" bash -c 'source "$1"; printf "%s\n" "${backup[@]}"' _ \

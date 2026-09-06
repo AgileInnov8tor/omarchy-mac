@@ -27,16 +27,25 @@
  arch=('x86_64' 'aarch64')
  url='https://github.com/basecamp/omarchy'
  license=('MIT')
-@@ -78,7 +76,7 @@
-   'etc/udev/rules.d/99-omarchy-wifi-powersave.rules'
+@@ -74,13 +72,14 @@
+   'etc/systemd/user.conf.d/20-omarchy-nofile.conf'
+   'etc/sddm.conf.d/10-theme.conf'
+   'etc/sddm.conf.d/10-wayland.conf'
+-  'etc/udev/rules.d/99-omarchy-power-profile.rules'
+-  'etc/udev/rules.d/99-omarchy-wifi-powersave.rules'
  )
  # backup has no arch-suffixed form, so the x86_64-only drop-ins join it here.
 -# Each of these paths is removed from the aarch64 package in package().
 +# The Mac profile selects its own backed-up paths immediately below.
  if [[ $CARCH == x86_64 ]]; then
    backup+=(
++    # These legacy rules are absent from the Mac source payload.
++    'etc/udev/rules.d/99-omarchy-power-profile.rules'
++    'etc/udev/rules.d/99-omarchy-wifi-powersave.rules'
      'etc/mkinitcpio.conf.d/omarchy_hooks.conf'
-@@ -88,6 +86,14 @@
+     'etc/mkinitcpio.conf.d/thunderbolt_module.conf'
+     'etc/limine-entry-tool.d/omarchy-defaults.conf'
+@@ -88,6 +87,14 @@
      'etc/modprobe.d/omarchy-usb-autosuspend.conf'
      'etc/systemd/oomd.conf.d/10-omarchy.conf'
      'etc/systemd/zram-generator.conf'
@@ -51,7 +60,7 @@
    )
  fi
  
-@@ -188,15 +194,17 @@
+@@ -188,15 +195,17 @@
    install -Dm644 default/systemd/user/omarchy-tailscale-receive.service "$pkgdir/usr/lib/systemd/user/omarchy-tailscale-receive.service"
    install -Dm644 default/systemd/user/omarchy-fcitx5.service "$pkgdir/usr/lib/systemd/user/omarchy-fcitx5.service"
    install -Dm644 default/systemd/user/omarchy-crash-watch.service "$pkgdir/usr/lib/systemd/user/omarchy-crash-watch.service"
@@ -76,7 +85,7 @@
  
    # Same for applications/** — used by omarchy-refresh-applications,
    # omarchy-install-gaming-*, etc. to copy .desktop files into ~/.local/share.
-@@ -211,20 +219,17 @@
+@@ -211,20 +220,17 @@
    install -d "$pkgdir/etc"
    cp -a etc/. "$pkgdir/etc/"
    if [[ $CARCH == aarch64 ]]; then
