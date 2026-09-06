@@ -47,6 +47,24 @@ pass "arm64 canonicalizes to aarch64"
 OMARCHY_UNAME_M=arm64 hw aarch64 || fail "arm64 detects as aarch64"
 pass "arm64 detects as aarch64"
 
+for unsupported in riscv64 armv7l unknown; do
+  if arch=$(OMARCHY_UNAME_M="$unsupported" hw arch); then
+    fail "unsupported architectures must fail detection" "$unsupported returned: $arch"
+  fi
+  [[ -z $arch ]] || fail "unsupported architectures print no canonical name" "$arch"
+done
+pass "unsupported architectures cannot be mistaken for x86_64"
+
+# A failed uname must fail even if it wrote a recognized architecture first.
+uname() { printf '%s\n' x86_64; return 1; }
+export -f uname
+if arch=$(OMARCHY_UNAME_M= hw arch); then
+  fail "failed uname must fail architecture detection" "$arch"
+fi
+unset -f uname
+[[ -z $arch ]] || fail "failed detection prints no canonical name" "$arch"
+pass "failed uname cannot be mistaken for x86_64"
+
 # aarch64 + apple DT: Apple Silicon.
 OMARCHY_UNAME_M=aarch64 OMARCHY_APPLE_COMPATIBLE="$tmp_dir/compatible" hw apple-silicon ||
   fail "aarch64 with apple DT is Apple Silicon"

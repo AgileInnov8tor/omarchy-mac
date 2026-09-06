@@ -54,6 +54,7 @@ pass "x86 with hid_apple loaded gets upstream fnmode=2"
 
 run_leaf aarch64 'apple,j413' 0
 [[ -f $conf ]] || fail "Apple Silicon gets fnmode=1 even before hid_apple loads"
+grep -qx 'options hid_apple fnmode=1' "$conf" || fail "Apple Silicon fnmode write is fnmode=1" "$(cat "$conf")"
 pass "Apple Silicon gets fnmode=1 even before hid_apple loads"
 
 run_leaf aarch64 'raspberrypi,4-model-b' 0
@@ -63,3 +64,14 @@ pass "non-Apple aarch64 is left alone"
 run_leaf aarch64 'raspberrypi,4-model-b' 1
 [[ ! -f $conf ]] || fail "non-Apple aarch64 with hid_apple loaded is left alone" "$(cat "$conf")"
 pass "non-Apple aarch64 does not take the x86 fnmode setting"
+
+run_leaf riscv64 'not-apple' 1
+[[ ! -f $conf ]] || fail "unknown architecture with hid_apple loaded is left alone" "$(cat "$conf")"
+pass "unknown architecture does not take the x86 fnmode setting"
+
+omarchy-hw-arch() { return 127; }
+export -f omarchy-hw-arch
+run_leaf x86_64 'not-apple' 1
+unset -f omarchy-hw-arch
+[[ ! -f $conf ]] || fail "missing architecture detector must not set x86 fnmode"
+pass "missing architecture detection leaves loaded hid_apple alone"

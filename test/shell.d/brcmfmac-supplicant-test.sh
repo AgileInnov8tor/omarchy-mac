@@ -121,6 +121,19 @@ for wifi_id in 4425 4433; do
 done
 pass "an Apple Silicon Mac is left alone"
 
+run_leaf "Apple Inc." 4433 1 riscv64 >/dev/null
+[[ ! -f $conf ]] || fail "unknown architecture must not receive the Intel Wi-Fi quirk"
+pass "unknown architecture is left alone even with matching Intel hardware IDs"
+
+# Simulate the command-not-found status without allowing the host's installed
+# detector to leak into the test through PATH.
+omarchy-hw-arch() { return 127; }
+export -f omarchy-hw-arch
+run_leaf "Apple Inc." 4433 1 aarch64 >/dev/null
+unset -f omarchy-hw-arch
+[[ ! -f $conf ]] || fail "missing architecture detector must not receive the Intel Wi-Fi quirk"
+pass "missing architecture detection leaves Apple Silicon Wi-Fi alone"
+
 # Older Macs report the vendor differently.
 run_leaf "Apple Computer, Inc." 43ba 0 >/dev/null
 [[ -f $conf ]] || fail "the older Apple vendor string is recognized"
