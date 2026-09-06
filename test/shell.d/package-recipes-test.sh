@@ -42,6 +42,19 @@ omarchy_package_recipe_export "$checkout_fixture" "$source_dir" "$fixture/nested
 [[ $(cat "$fixture/nested-stage/pkgbuilds/omarchy/PKGBUILD") == "profile" ]] || fail "a stage inside another checkout still applies the profile"
 pass "recipe patch application also works with TMPDIR inside another Git checkout"
 
+# The builder declares checkout readonly. Exercise all helpers in that actual
+# caller context so a helper local cannot accidentally shadow the global.
+bash -euo pipefail -c '
+  source "$ROOT/build-packages.sh"
+  resolved_pin=$(omarchy_package_recipe_commit "$1")
+  [[ $resolved_pin == "$4" ]]
+  resolved_source=$(OMARCHY_PKGS_PATH="$2/pkgbuilds" omarchy_package_recipe_source "$1" "$resolved_pin")
+  omarchy_package_recipe_export "$1" "$resolved_source" "$3" "$resolved_pin"
+  [[ $(cat "$3/pkgbuilds/omarchy/PKGBUILD") == "profile" ]]
+  [[ $checkout == "$ROOT" ]]
+' _ "$checkout_fixture" "$fixture" "$work/builder-export" "$pin" || fail "recipe helpers work with the actual builder and its readonly globals"
+pass "the actual builder can resolve and export pinned recipes with its readonly globals"
+
 for bad in main b81d678b invalid; do
   printf '%s\n' "$bad" >"$checkout_fixture/packaging/omarchy-pkgs.commit"
   if omarchy_package_recipe_commit "$checkout_fixture" >/dev/null 2>&1; then

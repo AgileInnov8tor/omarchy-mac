@@ -1,8 +1,8 @@
 # Resolve package recipes by their reviewed commit, never by a moving branch.
 
 omarchy_package_recipe_commit() {
-  local checkout="$1" commit
-  commit=$(cat "$checkout/packaging/omarchy-pkgs.commit") || return 1
+  local recipe_runtime_path="$1" commit
+  commit=$(cat "$recipe_runtime_path/packaging/omarchy-pkgs.commit") || return 1
   if [[ ! $commit =~ ^[0-9a-f]{40}$ ]]; then
     echo "Error: packaging/omarchy-pkgs.commit must contain one full Git commit ID." >&2
     return 1
@@ -11,7 +11,7 @@ omarchy_package_recipe_commit() {
 }
 
 omarchy_package_recipe_source() {
-  local checkout="$1" commit="$2" candidate cache
+  local recipe_runtime_path="$1" commit="$2" candidate cache
 
   # Explicit and existing developer checkouts are object sources only. Exporting
   # the pinned commit leaves their branch, index and local edits untouched.
@@ -25,7 +25,7 @@ omarchy_package_recipe_source() {
     return 0
   fi
 
-  for candidate in "$checkout/../omarchy-pkgs" "$HOME/code/omarchy-pkgs" \
+  for candidate in "$recipe_runtime_path/../omarchy-pkgs" "$HOME/code/omarchy-pkgs" \
     "${XDG_CACHE_HOME:-$HOME/.cache}/omarchy-build/omarchy-pkgs"; do
     if git -C "$candidate" cat-file -e "$commit^{commit}" 2>/dev/null; then
       git -C "$candidate" rev-parse --absolute-git-dir
@@ -45,8 +45,8 @@ omarchy_package_recipe_source() {
 }
 
 omarchy_package_recipe_export() {
-  local checkout="$1" source="$2" destination="$3" commit="$4"
-  local patch="$checkout/packaging/mac-profile.patch"
+  local recipe_runtime_path="$1" source="$2" destination="$3" commit="$4"
+  local patch="$recipe_runtime_path/packaging/mac-profile.patch"
 
   mkdir -p "$destination" || return 1
   if ! (set -o pipefail; git -C "$source" archive "$commit" pkgbuilds/omarchy pkgbuilds/omarchy-settings \
